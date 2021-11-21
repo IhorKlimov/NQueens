@@ -31,10 +31,6 @@ def generate_initial_state():
     return arr
 
 
-def have_this_conflict_pair_already(arr, row1, col1, row2, col2):
-    return f"{row1},{col1};{row2},{col2}" in arr or f"{row2},{col2};{row1},{col1}" in arr
-
-
 def get_num_of_horizontal_conflicts(arr):
     num_of_conflicts = 0
 
@@ -107,7 +103,9 @@ def get_num_of_diagonal_conflicts(arr):
 
 
 def has_reached_goal(arr):
-    num_of_conflicts = 0
+    return get_num_of_horizontal_conflicts(arr) \
+           + get_num_of_vertical_conflicts(arr) \
+           + get_num_of_diagonal_conflicts(arr) == 0
 
 
 def pretty_print(arr):
@@ -122,3 +120,4 @@ if __name__ == '__main__':
     print(get_num_of_horizontal_conflicts(board))
     print(get_num_of_vertical_conflicts(board))
     print(get_num_of_diagonal_conflicts(board))
+    print("Is winning position: " + str(has_reached_goal(board)))
