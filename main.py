@@ -1,11 +1,17 @@
 import random
 import sys
+import time
 
-board_size = 4
+
+board_size = 8
 cycles_made = 0
-generated = []
+start_time = 0
+max_time_allowed_to_run = 30 * 60 * 1000
 found_solution = False
 
+
+def current_milli_time():
+    return round(time.time() * 1000)
 
 def copy(arr):
     result = []
@@ -178,21 +184,18 @@ def pretty_print(arr):
 
 
 def solve_board(board):
-    global found_solution, cycles_made
+    global found_solution, cycles_made, start_time
 
     generated_states = [board]
 
     while not found_solution:
-        print("new")
         new_states = []
 
-        # if cycles_made >= 20000:
-        #     return
-
         for state in generated_states:
-            check_unique(state)
+            if current_milli_time() - start_time > max_time_allowed_to_run:
+                return
 
-            print(f"{cycles_made} {len(generated)}")
+            # print(f"{cycles_made}")
 
             if has_reached_goal(state):
                 found_solution = True
@@ -227,6 +230,8 @@ def generate_states(board):
 
 
 def main():
+    global start_time
+    start_time = current_milli_time()
     found_good_initial_state = False
 
     while not found_good_initial_state:
