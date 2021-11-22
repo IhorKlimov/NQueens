@@ -1,6 +1,10 @@
 import random
+import sys
 
 board_size = 3
+cycles_made = 0
+generated = []
+found_solution = False
 
 
 def copy(arr):
@@ -13,6 +17,19 @@ def copy(arr):
         result.append(r)
 
     return result
+
+
+def check_unique(b):
+    result = True
+
+    for board in generated:
+        for row in range(len(b)):
+            for col in range(len(b[row])):
+                if b[row][col] != board[row][col]:
+                    result = False
+
+    if result:
+        generated.append(b)
 
 
 def generate_initial_state():
@@ -59,7 +76,7 @@ def get_num_of_vertical_conflicts(arr):
     return num_of_conflicts
 
 
-def get_num_of_diagonal_conflicts(arr):
+def get_num_of_diagonal_conflicts_right(arr):
     num_of_conflicts = 0
 
     for row in range(len(arr)):
@@ -102,10 +119,54 @@ def get_num_of_diagonal_conflicts(arr):
     return num_of_conflicts
 
 
+def get_num_of_diagonal_conflicts_left(arr):
+    num_of_conflicts = 0
+
+    for row in range(len(arr)):
+        r = row
+        c = board_size - 1
+        while r < len(arr) and c < len(arr[row]):
+            if arr[r][c] == 1:
+                r2 = r + 1
+                c2 = c - 1
+
+                while r2 < len(arr) and c2 >= 0:
+                    if arr[r2][c2] == 1:
+                        num_of_conflicts += 1
+                        break
+
+                    r2 += 1
+                    c2 -= 1
+
+            r += 1
+            c -= 1
+
+    for col in range(board_size - 2, 0, -1):
+        r = 0
+        c = col
+        while r < len(arr) and c >= 0:
+            if arr[r][c] == 1:
+                r2 = r + 1
+                c2 = c - 1
+                while r2 < len(arr) and c2 >= 0:
+                    if arr[r2][c2] == 1:
+                        num_of_conflicts += 1
+                        break
+
+                    r2 += 1
+                    c2 -= 1
+
+            r += 1
+            c -= 1
+
+    return num_of_conflicts
+
+
 def has_reached_goal(arr):
     return get_num_of_horizontal_conflicts(arr) \
            + get_num_of_vertical_conflicts(arr) \
-           + get_num_of_diagonal_conflicts(arr) == 0
+           + get_num_of_diagonal_conflicts_right(arr) \
+           + get_num_of_diagonal_conflicts_left(arr) == 0
 
 
 def pretty_print(arr):
@@ -113,11 +174,75 @@ def pretty_print(arr):
         print(arr[row])
 
 
+def solve_board(board):
+    global found_solution, cycles_made
+
+    generated_states = [board]
+
+    while not found_solution:
+        print("new")
+        new_states = []
+
+        # if cycles_made >= 20000:
+        #     return
+
+        for state in generated_states:
+            check_unique(state)
+
+
+            print(f"{cycles_made} {len(generated)}")
+
+            if has_reached_goal(state):
+                found_solution = True
+                print(f"Found a solution! Cycles made: {cycles_made}")
+                pretty_print(state)
+                return
+
+            new_states.extend(generate_states(state))
+
+        generated_states.clear()
+        generated_states.extend(new_states)
+
+
+
+def generate_states(board):
+    global cycles_made
+    result = []
+
+    for col in range(len(board[0])):
+        for row in range(len(board)):
+            if board[row][col] == 1:
+                # found a queen in this column
+                for r in range(len(board)):
+                    if board[r][col] == 0:
+                        # found an empty spot
+                        board_copy = copy(board)
+                        board_copy[r][col] = 1
+                        board_copy[row][col] = 0
+                        result.append(board_copy)
+                        cycles_made += 1
+
+    return result
+
+
+def main():
+    found_good_initial_state = False
+
+    while not found_good_initial_state:
+        board = generate_initial_state()
+        print("Initial state:")
+        pretty_print(board)
+        print(get_num_of_horizontal_conflicts(board))
+        print(get_num_of_vertical_conflicts(board))
+        print(get_num_of_diagonal_conflicts_right(board))
+        print(get_num_of_diagonal_conflicts_left(board))
+        print("Is winning position: " + str(has_reached_goal(board)))
+
+        found_good_initial_state = not has_reached_goal(board)
+
+        if found_good_initial_state:
+            solve_board(board)
+
+
 if __name__ == '__main__':
-    board = generate_initial_state()
-    print("Initial state:")
-    pretty_print(board)
-    print(get_num_of_horizontal_conflicts(board))
-    print(get_num_of_vertical_conflicts(board))
-    print(get_num_of_diagonal_conflicts(board))
-    print("Is winning position: " + str(has_reached_goal(board)))
+    main()
