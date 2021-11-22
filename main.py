@@ -1,7 +1,7 @@
 import random
 import sys
 
-board_size = 3
+board_size = 4
 cycles_made = 0
 generated = []
 found_solution = False
@@ -20,13 +20,16 @@ def copy(arr):
 
 
 def check_unique(b):
-    result = True
+    result = False
+
+    if len(generated) == 0:
+        result = True
 
     for board in generated:
         for row in range(len(b)):
             for col in range(len(b[row])):
                 if b[row][col] != board[row][col]:
-                    result = False
+                    result = True
 
     if result:
         generated.append(b)
@@ -189,7 +192,6 @@ def solve_board(board):
         for state in generated_states:
             check_unique(state)
 
-
             print(f"{cycles_made} {len(generated)}")
 
             if has_reached_goal(state):
@@ -202,7 +204,6 @@ def solve_board(board):
 
         generated_states.clear()
         generated_states.extend(new_states)
-
 
 
 def generate_states(board):
