@@ -1,17 +1,20 @@
 import random
 import sys
 import time
-
+import os, psutil
 
 board_size = 8
 cycles_made = 0
+generated = []
 start_time = 0
+max_mb_use = 512
 max_time_allowed_to_run = 30 * 60 * 1000
 found_solution = False
 
 
 def current_milli_time():
     return round(time.time() * 1000)
+
 
 def copy(arr):
     result = []
@@ -193,9 +196,16 @@ def solve_board(board):
 
         for state in generated_states:
             if current_milli_time() - start_time > max_time_allowed_to_run:
+                print("Reached max time use. Closing")
                 return
 
-            # print(f"{cycles_made}")
+            mb_used = psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2
+
+            if mb_used > max_mb_use:
+                print("Reached max memory use. Closing")
+                return
+
+            print(f"{cycles_made}")
 
             if has_reached_goal(state):
                 found_solution = True
