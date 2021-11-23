@@ -1,9 +1,9 @@
 import random
-import sys
 import time
 import os, psutil
 
 board_size = 8
+depth_level = 0
 cycles_made = 0
 generated = []
 start_time = 0
@@ -174,11 +174,15 @@ def get_num_of_diagonal_conflicts_left(arr):
     return num_of_conflicts
 
 
-def has_reached_goal(arr):
+def get_number_of_conflicts(arr):
     return get_num_of_horizontal_conflicts(arr) \
            + get_num_of_vertical_conflicts(arr) \
            + get_num_of_diagonal_conflicts_right(arr) \
-           + get_num_of_diagonal_conflicts_left(arr) == 0
+           + get_num_of_diagonal_conflicts_left(arr)
+
+
+def has_reached_goal(arr):
+    return get_number_of_conflicts(arr) == 0
 
 
 def pretty_print(arr):
@@ -187,11 +191,12 @@ def pretty_print(arr):
 
 
 def solve_board(board):
-    global found_solution, cycles_made, start_time
+    global found_solution, cycles_made, start_time, depth_level
 
     generated_states = [board]
 
     while not found_solution:
+        print(f"Entering depth level {depth_level}")
         new_states = []
 
         for state in generated_states:
@@ -217,6 +222,7 @@ def solve_board(board):
 
         generated_states.clear()
         generated_states.extend(new_states)
+        depth_level += 1
 
 
 def generate_states(board):
@@ -246,17 +252,13 @@ def main():
 
     while not found_good_initial_state:
         board = generate_initial_state()
-        print("Initial state:")
-        pretty_print(board)
-        print(get_num_of_horizontal_conflicts(board))
-        print(get_num_of_vertical_conflicts(board))
-        print(get_num_of_diagonal_conflicts_right(board))
-        print(get_num_of_diagonal_conflicts_left(board))
-        print("Is winning position: " + str(has_reached_goal(board)))
-
-        found_good_initial_state = not has_reached_goal(board)
+        found_good_initial_state = not has_reached_goal(board) and get_number_of_conflicts(board) == 1
 
         if found_good_initial_state:
+            print("Initial state:")
+            pretty_print(board)
+            print(f"Found {get_number_of_conflicts(board)} conflicts")
+            print("Is winning position: " + str(has_reached_goal(board)))
             solve_board(board)
 
 
