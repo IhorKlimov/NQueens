@@ -9,6 +9,7 @@ generated = []
 start_time = 0
 max_mb_use = 512
 max_time_allowed_to_run = 30 * 60 * 1000
+num_of_previous_states = 0
 found_solution = False
 
 
@@ -191,7 +192,7 @@ def pretty_print(arr):
 
 
 def solve_board(board):
-    global found_solution, cycles_made, start_time, depth_level
+    global found_solution, cycles_made, start_time, depth_level, num_of_previous_states
 
     generated_states = [board]
 
@@ -210,16 +211,16 @@ def solve_board(board):
                 print("Reached max memory use. Closing")
                 return
 
-            print(f"{cycles_made}")
-
             if has_reached_goal(state):
                 found_solution = True
-                print(f"Found a solution! Cycles made: {cycles_made}")
+                print(
+                    f"Found a solution! Cycles made: {cycles_made}. States in memory: {len(new_states)}. Total states: {len(new_states) + num_of_previous_states}")
                 pretty_print(state)
                 return
 
             new_states.extend(generate_states(state))
 
+        num_of_previous_states += len(generated_states)
         generated_states.clear()
         generated_states.extend(new_states)
         depth_level += 1
