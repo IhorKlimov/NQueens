@@ -1,6 +1,9 @@
 import random
 import time
 import os, psutil
+from queue import PriorityQueue
+from dataclasses import dataclass, field
+from typing import Any
 
 board_size = 8
 depth_level = 0
@@ -11,6 +14,15 @@ max_mb_use = 512
 max_time_allowed_to_run = 30 * 60 * 1000
 num_of_previous_states = 0
 found_solution = False
+
+
+@dataclass(order=True)
+class PrioritizedItem:
+    priority: int
+    item: Any = field(compare=False)
+    parent: Any = field(compare=False)
+    g: Any = field(compare=False)
+    h: Any = field(compare=False)
 
 
 def current_milli_time():
@@ -191,7 +203,7 @@ def pretty_print(arr):
         print(arr[row])
 
 
-def solve_board(board):
+def solve_board_breadth_first_search(board):
     global found_solution, cycles_made, start_time, depth_level, num_of_previous_states
 
     generated_states = [board]
@@ -227,6 +239,64 @@ def solve_board(board):
         depth_level += 1
 
 
+def contains(items, state):
+    result = False
+
+    for i in items:
+        b = i.item
+        all_same = True
+        for row in range(len(b)):
+            for col in range(len(b[row])):
+                if b[row][col] != state.item[row][col]:
+                    all_same = False
+
+        if all_same:
+            result = True
+            break
+
+    return result
+
+
+def solve_board_a_star(board):
+    global cycles_made, num_of_previous_states
+    open_list = PriorityQueue()
+    closed_list = []
+    open_list.put(PrioritizedItem(0, board, None, 0, 0))
+
+    while open_list.qsize() > 0:
+        if current_milli_time() - start_time > max_time_allowed_to_run:
+            print("Reached max time use. Closing")
+            return
+
+        mb_used = psutil.Process(os.getpid()).memory_info().rss / 1024 ** 2
+
+        if mb_used > max_mb_use:
+            print("Reached max memory use. Closing")
+            return
+
+        current = open_list.get()
+        num_of_previous_states += 1
+
+        if has_reached_goal(current.item):
+            print(
+                f"Found a solution! Cycles made: {cycles_made}. States in memory: {open_list.qsize() + len(closed_list)}. Total states: {num_of_previous_states + open_list.qsize() + len(closed_list)}")
+            pretty_print(current.item)
+            return
+        else:
+            closed_list.append(current)
+
+            successors = []
+            for state in generate_states(current.item):
+                cycles_made += 1
+                g_ = current.g + 1
+                h_ = get_number_of_conflicts(state)
+                successors.append(PrioritizedItem(g_ + h_, state, current.item, g_, h_))
+
+            for successor in successors:
+                if not contains(closed_list, successor):
+                    open_list.put(successor)
+
+
 def generate_states(board):
     global cycles_made
     result = []
@@ -254,14 +324,14 @@ def main():
 
     while not found_good_initial_state:
         board = generate_initial_state()
-        found_good_initial_state = not has_reached_goal(board) and get_number_of_conflicts(board) == 1
+        found_good_initial_state = not has_reached_goal(board)
 
         if found_good_initial_state:
             print("Initial state:")
             pretty_print(board)
             print(f"Found {get_number_of_conflicts(board)} conflicts")
             print("Is winning position: " + str(has_reached_goal(board)))
-            solve_board(board)
+            solve_board_a_star(board)
 
 
 if __name__ == '__main__':
