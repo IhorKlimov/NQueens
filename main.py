@@ -214,7 +214,8 @@ def solve_board(board):
             if has_reached_goal(state):
                 found_solution = True
                 print(
-                    f"Found a solution! Cycles made: {cycles_made}. States in memory: {len(new_states)}. Total states: {len(new_states) + num_of_previous_states}")
+                    f"Found a solution! Cycles made: {cycles_made}. States in memory: {len(new_states) + len(generated_states)}. "
+                    f"Total states: {len(new_states) + len(generated_states) + num_of_previous_states}")
                 pretty_print(state)
                 return
 
